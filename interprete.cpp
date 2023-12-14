@@ -115,6 +115,68 @@ int main()
                     execvp(args[0], args);                  // Ejecutar el comando con argumentos
                     perror("Error al ejecutar el comando"); // En caso de error en execv
                     exit(EXIT_FAILURE);
+
+
+                }
+                else
+                { // Código para el proceso padre
+                    if (existe_pipe)
+                    {
+                        // Llenar todo el arreglo con nullptr (punteros vacíos)
+                        fill(args, args + 50, nullptr);
+                        numPalabras = 0;
+                        while (token != NULL)
+                        {
+                            if (strcmp(token, ">") == 0)
+                            { // Si encontramos el símbolo de redirección, configuramos la redirección de salida
+                                existe_salida = true;
+                                token = strtok(NULL, " "); // Obtenemos el nombre del archivo de salida
+                                out_file = token;
+                            }
+                            else
+                            {
+                                args[numPalabras] = token;
+                                numPalabras++;
+                            }
+                            token = strtok(NULL, " ");
+                        }
+
+                        args[numPalabras] = NULL;
+
+                        close(pipe1[1]); // Cerramos el de escritura(Padre)
+                        pid = fork();
+
+                        if (pid == 0)
+                        { // Codigo del 2do hijo
+
+                            close(pipe1[1]); // Cerramos la escritura, pero el padre ya lo heredo cerrado, es innecesario cerrarlo otra vez
+                            close(0);        // Cerramos la salida estandar
+                            dup(pipe1[0]);
+                            close(pipe1[0]);
+
+                            if (existe_salida)
+                            { // Si hay redirección de salida, abrimos el archivo para escritura
+                                freopen(out_file, "w", stdout);
+                            }
+
+                            execvp(args[0], args);                // Ejecutar el comando con argumentos
+                            perror("Error al ejecutar el comando"); // En caso de error en execv
+                            exit(EXIT_FAILURE);
+                        }
+                        close(pipe1[0]); // Cerramos el de lectura(Hijo)
+                    }
+					
+                    if (!ejecutar_en_segundo_plano) {
+                        // wait(0);
+                        waitpid(pid, NULL, 0);
+                        
+                        if (existe_pipe){
+                            wait(0);
+                        }
+                    } else {
+                        // Imprimir el ID del proceso en segundo plano
+                        cout << "[Proceso en segundo plano con ID " << pid << "]" << endl;
+                    }
                 }
             }
         }
