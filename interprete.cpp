@@ -82,7 +82,7 @@ int main()
                 int pipe1[2]; //[0] = READ , [1] = WRITE
                 if (existe_pipe)
                 {
-                    pipe(pipe1);
+                    pipe(pipe1); // Creamos la tuberia
                 }
 
                 pid = fork(); // Creamos un proceso hijo
@@ -90,26 +90,26 @@ int main()
                 if (pid == 0)
                 { // Código para el proceso hijo
 
-                    if (existe_salida)
+                    if (existe_salida) // >
                     { // Si hay redirección de salida, abrimos el archivo para escritura
                         freopen(out_file, "w", stdout);
                     }
-                    if (existe_entrada)
+                    if (existe_entrada) // <
                     {
                         // Si hay redirección de entrada, abrimos el archivo para lectura
                         freopen(input_file, "r", stdin);
                     }
-                    if (existe_pipe)
+                    if (existe_pipe) // Realizando la conexion de pipe
                     {
                         close(pipe1[0]); // Cerramos la lectura
                         close(1);        // Cerramos la salida estandar
-                        dup(pipe1[1]);
-                        close(pipe1[1]);
+                        dup(pipe1[1]);   // Duplicamos el extremo de escritura de la tubería en el descriptor de archivo 1 (stdout)
+                        close(pipe1[1]); // Cerramos el descriptor de archivo original
                     }
                     if (ejecutar_en_segundo_plano)
                     {
                         // Configurar el proceso para ejecutarse en segundo plano
-                        setpgid(0, 0);
+                        setpgid(0, 0); // Proceso actual / Grupo de procesos actual
                     }
 
                     execvp(args[0], args);                  // Ejecutar el comando con argumentos
@@ -180,6 +180,6 @@ int main()
                 }
             }
         }
-        return 0;
     }
+    return 0;
 }
